@@ -26,22 +26,22 @@ impl std::fmt::Display for Color {
 }
 
 struct Table {
-    Colors: [[Option<Color>; WIDTH]; HEIGHT],
+    colors: [[Option<Color>; WIDTH]; HEIGHT],
 }
 
 impl Table {
     fn new() -> Table {
-        let mut table = Table{Colors: [[None; 8]; 8]};
-        table.Colors[3][3] = Some(Color::White);
-        table.Colors[4][4] = Some(Color::White);
-        table.Colors[3][4] = Some(Color::Black);
-        table.Colors[4][3] = Some(Color::Black);
+        let mut table = Table{colors: [[None; 8]; 8]};
+        table.colors[3][3] = Some(Color::White);
+        table.colors[4][4] = Some(Color::White);
+        table.colors[3][4] = Some(Color::Black);
+        table.colors[4][3] = Some(Color::Black);
         table
     }
 
     fn print(&self) {
         let head = (0..WIDTH).fold(" ".to_string(), |s, x| format!("{} {}", s, x));
-        let result = self.Colors.iter().enumerate().map(|(i, x)| {
+        let result = self.colors.iter().enumerate().map(|(i, x)| {
             x.iter().fold(format!("{}|", i).to_string(), |s, y| {
                 s + "" + match y {
                     Some(Color::Black) => "B",
@@ -58,9 +58,9 @@ impl Table {
         if w > WIDTH || h > HEIGHT {
             false
         } else {
-            match self.Colors[h][w] {
+            match self.colors[h][w] {
                 None => {
-                    self.Colors[h][w] = Some(*color);
+                    self.colors[h][w] = Some(*color);
                     true
                 },
                 _ => false,
