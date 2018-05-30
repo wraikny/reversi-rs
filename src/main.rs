@@ -25,18 +25,18 @@ impl std::fmt::Display for Color {
     }
 }
 
-struct Table {
+struct Board {
     colors: [[Option<Color>; WIDTH]; HEIGHT],
 }
 
-impl Table {
-    fn new() -> Table {
-        let mut table = Table{colors: [[None; 8]; 8]};
-        table.colors[3][3] = Some(Color::White);
-        table.colors[4][4] = Some(Color::White);
-        table.colors[3][4] = Some(Color::Black);
-        table.colors[4][3] = Some(Color::Black);
-        table
+impl Board {
+    fn new() -> Board {
+        let mut board = Board{colors: [[None; 8]; 8]};
+        board.put(Color::White, (3, 3));
+        board.put(Color::White, (4, 4));
+        board.put(Color::Black, (3, 4));
+        board.put(Color::Black, (4, 3));
+        board
     }
 
     fn print(&self) {
@@ -54,13 +54,13 @@ impl Table {
         println!("{}\n{}", head, result);
     }
 
-    fn put(&mut self, color: &Color, (w, h): (usize, usize)) -> bool {
+    fn put(&mut self, color: Color, (w, h): (usize, usize)) -> bool {
         if w > WIDTH || h > HEIGHT {
             false
         } else {
             match self.colors[h][w] {
                 None => {
-                    self.colors[h][w] = Some(*color);
+                    self.colors[h][w] = Some(color);
                     true
                 },
                 _ => false,
@@ -72,14 +72,14 @@ impl Table {
 fn main() {
     println!("Reversi");
 
-    let mut table = Table::new();
+    let mut board = Board::new();
 
     let mut player = Color::Black;
 
     let mut winner : Option<Color> = None;
 
     'main_loop: while let None = winner {
-        table.print();
+        board.print();
         let mut coodinate : Option<(usize, usize)> = None;
         
         while let None = coodinate {
@@ -110,7 +110,7 @@ fn main() {
         if let Some((w, h)) = coodinate {
             println!("({}, {})", w, h);
 
-            table.put(&player, (w, h));
+            board.put(player, (w, h));
         }
 
         player.rev();
