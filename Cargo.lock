@@ -1,0 +1,4 @@
+[[package]]
+name = "reversi-rs"
+version = "0.1.0"
+

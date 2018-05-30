@@ -1,0 +1,6 @@
+[package]
+name = "reversi-rs"
+version = "0.1.0"
+authors = ["wraikny <writtenknown@gmail.com>"]
+
+[dependencies]
