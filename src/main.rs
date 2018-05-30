@@ -8,10 +8,10 @@ enum Color {
 }
 
 impl Color {
-    fn rev(&mut self) {
+    fn rev(&self) -> Color {
         match self {
-            Color::Black => {*self = Color::White},
-            Color::White => {*self = Color::Black},
+            Color::Black => Color::White,
+            Color::White => Color::Black,
         }
     }
 }
@@ -67,6 +67,20 @@ impl Board {
             false
         }
     }
+
+    fn rev(&mut self, (w, h) : (usize, usize)) -> bool {
+        if w < WIDTH && h < HEIGHT {
+            match self.colors[h][w] {
+                Some(c) => {
+                    self.colors[h][w] = Some(c.rev());
+                    true
+                },
+                _ => false,
+            }
+        } else {
+            false
+        }
+    }
 }
 
 fn main() {
@@ -113,6 +127,6 @@ fn main() {
             board.put(player, (w, h));
         }
 
-        player.rev();
+        player = player.rev();
     }
 }
