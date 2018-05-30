@@ -55,9 +55,7 @@ impl Board {
     }
 
     fn put(&mut self, color: Color, (w, h): (usize, usize)) -> bool {
-        if w > WIDTH || h > HEIGHT {
-            false
-        } else {
+        if w < WIDTH && h < HEIGHT {
             match self.colors[h][w] {
                 None => {
                     self.colors[h][w] = Some(color);
@@ -65,6 +63,8 @@ impl Board {
                 },
                 _ => false,
             }
+        } else {
+            false
         }
     }
 }
