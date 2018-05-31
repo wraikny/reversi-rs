@@ -40,7 +40,7 @@ impl Board {
         board
     }
 
-    pub fn print(&self) {
+    pub fn display(&self) {
         let (width, height) = self.size;
         let head = (0..width).fold(" ".to_string(), |s, x| format!("{} {}", s, x));
 

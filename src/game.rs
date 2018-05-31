@@ -104,7 +104,7 @@ pub fn start() {
 
     'main_loop: loop {
 
-        board.print();
+        board.display();
 
         'input: loop {
             if board.putable(&player) {
@@ -126,7 +126,7 @@ pub fn start() {
 
         if board.finished(&player) {
             result(board.winner());
-            board.print();
+            board.display();
             break 'main_loop;
         }
 
