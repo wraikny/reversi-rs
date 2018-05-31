@@ -11,10 +11,9 @@ enum Color {
 
 impl Color {
     fn rev(&self) -> Color {
-        use Color::{White, Black};
         match self {
-            Black => White,
-            White => Black,
+            Color::Black => Color::White,
+            Color::White => Color::Black,
         }
     }
 }
@@ -63,6 +62,7 @@ impl Board {
             };
 
             let (x, y) = (WIDTH / 2, HEIGHT / 2);
+            
             use Color::{White, Black};
 
             insert((x - 1, y - 1), White);
@@ -338,7 +338,9 @@ fn main() {
                     Some(Color::White)
                 } else if white_num < black_num  {
                     Some(Color::Black)
-                } else { None };
+                } else {
+                    None
+                };
 
             result(winner);
             board.print();
