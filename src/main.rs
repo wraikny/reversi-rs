@@ -96,7 +96,10 @@ impl Board {
         println!("{}\n{}", head, table);
     }
 
-    fn rev_coodinates(&self, coodinate : (usize, usize), player : &Color) -> HashSet<(usize, usize)> {
+    fn rev_coodinates(
+        &self, coodinate : (usize, usize), 
+        player : &Color
+    ) -> HashSet<(usize, usize)> {
         let mut rev_cdns : HashSet<(usize, usize)> = HashSet::new();
 
         // if the coodinate in the keys and empty
@@ -123,18 +126,20 @@ impl Board {
                             color != player
                         } else { false }
                 }) {
-                    board.iter().for_each(|(cdn, _)| {rev_cdns.insert(**cdn);});
+                    board.iter().for_each(|(cdn, _)| {
+                        rev_cdns.insert(**cdn);
+                    });
                 }
             };
 
             let mut search = |
-            f : &Fn((usize, usize)) -> bool, 
-            g : &Fn((usize, usize)) -> usize,
-            h : &Fn((usize, usize), (usize, usize)) -> bool,
+                f : &Fn((usize, usize)) -> bool, 
+                g : &Fn((usize, usize)) -> usize,
+                h : &Fn((usize, usize), (usize, usize)) -> bool,
             | {
                 let mut board : Vec<_> = self.colors.iter()
-                    .filter(|(item, _)| f(**item))
-                    .collect();
+                    .filter(|(item, _)| f(**item)).collect();
+                
                 board.sort_by_key(|(item, _)| g(**item));
 
                 if let Some(cdnf) = find_same(&board) {
@@ -217,10 +222,9 @@ impl Board {
     fn putable(&self, player : &Color) -> bool {
         self.colors.iter()
         .any(|(cdn, color)|{
-            if color.is_none() {
-                self.exist_nextto(*cdn, player) && 
-                self.rev_coodinates(*cdn, &player).iter().count() > 0
-            } else {false}
+            color.is_none() &&
+            self.exist_nextto(*cdn, player) && 
+            self.rev_coodinates(*cdn, &player).iter().count() > 0
         })
     }
 
@@ -254,7 +258,7 @@ fn read_coodinate(player : &Color) -> Option<(usize, usize)> {
         std::io::stdin().read_line(&mut read)
             .expect("Failed to read line.");
         
-        // Quit the gam.
+        // Quit the game.
         if read.trim() == "q".to_string() {
             return None;
         }
