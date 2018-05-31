@@ -46,12 +46,12 @@ fn get_board_size(filename : &str) -> (usize, usize) {
     }
 }
 
-fn read_coodinate(player : &Color, size : (usize, usize)) -> Option<(usize, usize)> {
+fn read_coordinate(player : &Color, size : (usize, usize)) -> Option<(usize, usize)> {
     let (width, height) = size;
-    let mut coodinate : Option<(usize, usize)> = None;
+    let mut coordinate : Option<(usize, usize)> = None;
     
-    while coodinate.is_none() {
-        println!("Input coodinate of {} as 'w h'. (q: quit)", player);
+    while coordinate.is_none() {
+        println!("Input coordinate of {} as 'w h'. (q: quit)", player);
         let mut read = String::new();
         std::io::stdin().read_line(&mut read)
             .expect("Failed to read line.");
@@ -72,7 +72,7 @@ fn read_coodinate(player : &Color, size : (usize, usize)) -> Option<(usize, usiz
         
         if let (Some(Some(w)), Some(Some(h))) = (c.next(), c.next()) {
             if w < width && h < height {
-                coodinate = Some((w, h));
+                coordinate = Some((w, h));
             } else {
                 println!("-*- ({}, {}) is out of range. -*-\n", w, h)
             }
@@ -80,7 +80,7 @@ fn read_coodinate(player : &Color, size : (usize, usize)) -> Option<(usize, usiz
             println!("-*- Input correctly. -*-\n")
         }
     };
-    coodinate
+    coordinate
 }
 
 pub fn start() {
@@ -108,9 +108,9 @@ pub fn start() {
 
         'input: loop {
             if board.putable(&player) {
-                let coodinate = read_coodinate(&player, size);
+                let coordinate = read_coordinate(&player, size);
 
-                if let Some(cdn) = coodinate {
+                if let Some(cdn) = coordinate {
                     if board.put(cdn, &player) {
                         break 'input;
                     }

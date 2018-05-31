@@ -64,15 +64,15 @@ impl Board {
     }
 
     fn rev_cdns(
-        &self, coodinate : (usize, usize), 
+        &self, coordinate : (usize, usize), 
         player : &Color
         ) -> HashSet<(usize, usize)> {
     
         let mut rev_cdns_set : HashSet<(usize, usize)> = HashSet::new();
 
-        // if the coodinate in the keys and empty
-        if self.colors.get(&coodinate).is_some() {
-            let (w, h) = coodinate;
+        // if the coordinate in the keys and empty
+        if self.colors.get(&coordinate).is_some() {
+            let (w, h) = coordinate;
 
             let find_same = |board : &Vec<(&(usize, usize), &Option<Color>)>| {
                 let found = board.iter()
@@ -212,10 +212,10 @@ impl Board {
             })
     }
 
-    pub fn put(&mut self, coodinate : (usize, usize), player : &Color) -> bool {
-        let rev_cdns = self.rev_cdns(coodinate, player);
+    pub fn put(&mut self, coordinate : (usize, usize), player : &Color) -> bool {
+        let rev_cdns = self.rev_cdns(coordinate, player);
         if rev_cdns.iter().count() > 0 {
-            self.colors.insert(coodinate, Some(*player));
+            self.colors.insert(coordinate, Some(*player));
             for cdn in rev_cdns {
                 self.rev(cdn);
             }
@@ -226,9 +226,9 @@ impl Board {
         }
     }
 
-    fn rev(&mut self, coodinate : (usize, usize)) {
-        if let Some(Some(color)) = self.colors.get(&coodinate) {
-            self.colors.insert(coodinate, Some(color.rev()));
+    fn rev(&mut self, coordinate : (usize, usize)) {
+        if let Some(Some(color)) = self.colors.get(&coordinate) {
+            self.colors.insert(coordinate, Some(color.rev()));
         }
     }
 
