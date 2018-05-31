@@ -1,6 +1,4 @@
-extern crate reversi_rs;
-
-use reversi_rs::reversi;
+extern crate reversi;
 
 fn main() {
     reversi::game::start();

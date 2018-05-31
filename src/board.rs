@@ -2,7 +2,7 @@ const WIDTH : usize = 8;
 const HEIGHT : usize = 8;
 
 use std::collections::{HashMap, HashSet};
-use reversi::color::Color;
+use color::Color;
 
 #[derive(Clone)]
 pub struct Board {

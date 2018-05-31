@@ -17,7 +17,7 @@ impl Color {
 
 impl PartialEq for Color {
     fn eq(&self, other: &Color) -> bool {
-        use reversi::color::Color::{Black, White};
+        use color::Color::{Black, White};
         
         match self {
             White => { match other {

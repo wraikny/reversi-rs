@@ -1,7 +1,7 @@
 use std;
 
-use reversi::color::Color;
-use reversi::board::Board;
+use color::Color;
+use board::Board;
 
 fn read_coodinate(player : &Color, board : &Board) -> Option<(usize, usize)> {
     let mut coodinate : Option<(usize, usize)> = None;

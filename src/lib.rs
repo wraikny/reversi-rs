@@ -1,1 +1,3 @@
-pub mod reversi;
+pub mod game;
+mod board;
+mod color;
