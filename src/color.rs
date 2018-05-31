@@ -20,6 +20,10 @@ impl Color {
             Color::White => "o",
         }
     }
+
+    pub fn sym_empty() -> &'static str {
+        "-"
+    }
 }
 
 impl PartialEq for Color {

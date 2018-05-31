@@ -54,7 +54,7 @@ impl Board {
                 .fold("".to_string(), |s, ((_, _), color)| {
                     s + "" + match color {
                         Some(c) => c.sym(),
-                        None => "-",
+                        None => Color::sym_empty(),
                     } + " "
                 })
             })
