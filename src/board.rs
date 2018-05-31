@@ -1,6 +1,3 @@
-const WIDTH : usize = 8;
-const HEIGHT : usize = 8;
-
 use std::collections::{HashMap, HashSet};
 use color::Color;
 
@@ -11,13 +8,13 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new() -> Board {
+    pub fn new(size : (usize, usize)) -> Board {
         let mut board = Board{
             colors: HashMap::new(), 
-            size : (WIDTH, HEIGHT)
+            size : size,
         };
 
-        let (width, height) = board.size;
+        let (width, height) = size;
 
         for x in 0..width {
             for y in 0..height {

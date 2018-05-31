@@ -1,4 +1,4 @@
-use std;
+use std::fmt;
 
 #[derive(Clone, Copy)]
 pub enum Color {
@@ -32,8 +32,8 @@ impl PartialEq for Color {
     }
 }
 
-impl std::fmt::Display for Color {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for Color {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", match self {
             Color::Black => "Black",
             Color::White => "White",

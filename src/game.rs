@@ -3,14 +3,60 @@ use std;
 use color::Color;
 use board::Board;
 
-fn read_coodinate(player : &Color, board : &Board) -> Option<(usize, usize)> {
+const WIDTH : usize = 8;
+const HEIGHT : usize = 8;
+
+fn get_board_size(filename : &str) -> (usize, usize) {
+    use std::error::Error;
+    use std::fs::File;
+    use std::io::prelude::*;
+    use std::path::Path;
+
+    let path = Path::new(filename);
+
+    let mut file = match File::open(&path) {
+        Err(why) => {
+            println!("Couldn't open {}: {}", filename, Error::description(&why));
+            return (WIDTH, HEIGHT);
+        },
+        Ok(file) => file,
+    };
+
+    let mut s = String::new();
+    match file.read_to_string(&mut s) {
+        Err(why) => {
+            println!("Couldn't read {}: {}", filename, Error::description(&why));
+            return (WIDTH, HEIGHT);
+        },
+        Ok(_) => (),
+    }
+
+    let mut s = s.split(",")
+        .map(|x| {
+            match x.trim().parse::<usize>() {
+                Ok(num) => Some(num),
+                Err(_) => None,
+            }
+        });
+
+    if let (Some(Some(w)), Some(Some(h))) = (s.next(), s.next()) {
+        (w, h)
+    } else {
+        (WIDTH, HEIGHT)
+    }
+}
+
+fn read_coodinate(player : &Color, size : (usize, usize)) -> Option<(usize, usize)> {
+    let (width, height) = size;
     let mut coodinate : Option<(usize, usize)> = None;
     
     while coodinate.is_none() {
-        println!("Input coodinate of {} as 'w h'.(q: quit)", player);
+        println!("Input coodinate of {} as 'w h'. (q: quit)", player);
         let mut read = String::new();
         std::io::stdin().read_line(&mut read)
             .expect("Failed to read line.");
+        
+        print!("\n");
         
         // Quit the game.
         if read.trim() == "q".to_string() {
@@ -25,24 +71,26 @@ fn read_coodinate(player : &Color, board : &Board) -> Option<(usize, usize)> {
             });
         
         if let (Some(Some(w)), Some(Some(h))) = (c.next(), c.next()) {
-            let (width, height) = board.size;
             if w < width && h < height {
                 coodinate = Some((w, h));
             } else {
-                println!("-*- ({}, {}) is out of range. -*-", w, h)
+                println!("-*- ({}, {}) is out of range. -*-\n", w, h)
             }
         } else {
-            println!("-*- Input correctly. -*-")
+            println!("-*- Input correctly. -*-\n")
         }
     };
-
     coodinate
 }
 
 pub fn start() {
-    println!("-*-Reversi!-*-");
+    println!("Reversi!!!!!\n");
 
-    let mut board = Board::new();
+    let size = get_board_size("config.csv");
+
+    println!("The Board size is {:?}.\n", size);
+
+    let mut board = Board::new(size);
 
     let mut player = Color::Black;
 
@@ -55,10 +103,12 @@ pub fn start() {
     };
 
     'main_loop: loop {
+
         board.print();
+
         'input: loop {
             if board.putable(&player) {
-                let coodinate = read_coodinate(&player, &board);
+                let coodinate = read_coodinate(&player, size);
 
                 if let Some(cdn) = coodinate {
                     if board.put(cdn, &player) {
@@ -79,6 +129,7 @@ pub fn start() {
             board.print();
             break 'main_loop;
         }
+
         player = player.rev();
     }
 }
