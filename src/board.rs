@@ -42,7 +42,12 @@ impl Board {
 
     pub fn display(&self) {
         let (width, height) = self.size;
-        let head = (0..width).fold(" ".to_string(), |s, x| format!("{} {}", s, x));
+
+        let current = format!("{}:{}\n{}:{}\n", 
+            Color::Black, self.count_color(Color::Black), 
+            Color::White, self.count_color(Color::White));
+        
+        let head = (0..width).fold("\\".to_string(), |s, x| format!("{} {}", s, x));
 
         let mut board : Vec<_> = self.colors.iter().collect();
         board.sort_by_key(|((w, _), _)| w);
@@ -60,7 +65,7 @@ impl Board {
             })
         });
 
-        println!("{}\n{}", head, table);
+        println!("{}\n{}\n{}", current, head, table);
     }
 
     fn rev_cdns(
