@@ -142,7 +142,6 @@ impl Board {
                 &|(_, y)| y,
                 &|(_, hf), (_, y)| hf < y,
             );
-            
             // downside
             search(
                 &|(x, y)| x == w && y > h,
@@ -238,9 +237,9 @@ impl Board {
 
 fn read_coodinate(player : &Color) -> Option<(usize, usize)> {
     let mut coodinate : Option<(usize, usize)> = None;
-        
-    while let None = coodinate {
-        println!("Input coodinate of {} as 'w h'.(q: end)", player);
+    
+    while coodinate.is_none() {
+        println!("Input coodinate of {} as 'w h'.(q: quit)", player);
         let mut read = String::new();
         std::io::stdin().read_line(&mut read)
             .expect("Failed to read line.");
@@ -272,36 +271,44 @@ fn read_coodinate(player : &Color) -> Option<(usize, usize)> {
 }
 
 fn main() {
-    println!("Reversi");
+    println!("-*-Reversi!-*-");
 
     let mut board = Board::new();
 
     let mut player = Color::Black;
 
-    let mut winner : Option<Color> = None;
+    let result = |color : Option<Color>| {
+        if let Some(color) = color {
+            println!("{} win!", color);
+        } else {
+            println!("Draw");
+        }
+    };
 
-    'main_loop: while let None = winner {
+    'main_loop: loop {
         board.print();
-        loop {
+        'input: loop {
             if board.putable(&player) {
-                let mut coodinate = read_coodinate(&player);
+                let coodinate = read_coodinate(&player);
 
-                if let Some((w, h)) = coodinate {
-                    if board.put((w, h), &player) {
-                        break;
+                if let Some(cdn) = coodinate {
+                    if board.put(cdn, &player) {
+                        break 'input;
                     }
                 } else {
                     break 'main_loop;
                 }
             } else {
                 println!("Skip the player {}", &player);
-                break;
+                player = player.rev();
+                continue 'main_loop;
             }
         }
 
         if board.colors.iter()
             .filter(|(_, color)| color.is_none())
-            .count() == 0 
+            .count() == 0 ||
+            (!board.putable(&player) && !board.putable(&player.rev()))
         {
             let count_color = |col : Color| board.colors.iter()
                 .filter(|(_, color)| {
@@ -312,21 +319,17 @@ fn main() {
             
             let black_num = count_color(Color::Black);
             
-            winner = if white_num > black_num {
-                Some(Color::White)
-            } else if white_num < black_num  {
-                Some(Color::Black)
-            } else { None };
+            let winner =
+                if white_num > black_num {
+                    Some(Color::White)
+                } else if white_num < black_num  {
+                    Some(Color::Black)
+                } else { None };
+
+            result(winner);
 
             break 'main_loop;
         }
-
         player = player.rev();
-    }
-
-    if let Some(color) = winner {
-        println!("{} win!", color);
-    } else {
-        println!("Draw");
     }
 }
