@@ -117,129 +117,74 @@ impl Board {
                 }
             };
 
+            let mut search = |
+            f : &Fn((usize, usize)) -> bool, 
+            g : &Fn((usize, usize)) -> usize,
+            h : &Fn((usize, usize), (usize, usize)) -> bool,
+            | {
+                let mut board : Vec<_> = self.colors.iter()
+                    .filter(|(item, _)| f(**item))
+                    .collect();
+                board.sort_by_key(|(item, _)| g(**item));
+
+                if let Some(cdnf) = find_same(&board) {
+                    let mut board = board.iter()
+                        .filter(|(item, _)|{
+                            h(cdnf, **item)
+                        }).collect();
+                    add_revs(&board);
+                }
+            };
+
             // upside
-            {
-                let mut board : Vec<_> = self.colors.iter()
-                    .filter(|((x, y), _)| *x == w && *y < h)
-                    .collect();
-                board.sort_by_key(|((_, y), _)| y);
-
-                if let Some((_, hf)) = find_same(&board) {
-                    let mut board = board.iter()
-                        .filter(|((_, y), _)|{
-                            hf < *y
-                        }).collect();
-                    add_revs(&board);
-                }
-            }
+            search(
+                &(|(x, y)| x == w && y < h),
+                &(|(_, y)| y),
+                &(|(_, hf), (_, y)| hf < y),
+            );
+            
             // downside
-            {
-                let mut board : Vec<_> = self.colors.iter()
-                    .filter(|((x, y), _)| *x == w && *y > h)
-                    .collect();
-                board.sort_by_key(|((_, y), _)| HEIGHT - y);
-
-                if let Some((_, hf)) = find_same(&board) {
-                    let mut board = board.iter()
-                        .filter(|((_, y), _)|{
-                            hf > *y
-                        }).collect();
-                    add_revs(&board);
-                }
-            }
+            search(
+                &(|(x, y)| x == w && y > h),
+                &(|(_, y)| HEIGHT - y),
+                &(|(_, hf), (_, y)| hf > y),
+            );
             // leftside
-            {
-                let mut board : Vec<_> = self.colors.iter()
-                    .filter(|((x, y), _)| *y == h && *x < w)
-                    .collect();
-                board.sort_by_key(|((x, _), _)| x);
-
-                if let Some((wf, _)) = find_same(&board) {
-                    let mut board = board.iter()
-                        .filter(|((x, _), _)|{
-                            wf < *x
-                        }).collect();
-                    add_revs(&board);
-                }
-            }
+            search(
+                &(|(x, y)| y == h && x < w),
+                &(|(x, _)| x),
+                &(|(wf, _), (x, _)| wf < x),
+            );
             // rightside
-            {
-                let mut board : Vec<_> = self.colors.iter()
-                    .filter(|((x, y), _)| *y == h && *x > w)
-                    .collect();
-                board.sort_by_key(|((x, _), _)| WIDTH - x);
-
-                if let Some((wf, _)) = find_same(&board) {
-                    let mut board = board.iter()
-                        .filter(|((x, _), _)|{
-                            wf > *x
-                        }).collect();
-                    add_revs(&board);
-                }
-            }
-            
+            search(
+                &(|(x, y)| y == h && x > w),
+                &(|(x, _)| WIDTH - x),
+                &(|(wf, _), (x, _)| wf > x),
+            );
             // leftup
-            {
-                let mut board : Vec<_> = self.colors.iter()
-                    .filter(|((x, y), _)| (w + y) == (x + h) && *x < w)
-                    .collect();
-                board.sort_by_key(|((x, _), _)| x);
-
-                if let Some((wf, _)) = find_same(&board) {
-                    let mut board = board.iter()
-                        .filter(|((x, _), _)|{
-                            wf < *x
-                        }).collect();
-                    add_revs(&board);
-                }
-            }
-            
+            search(
+                &(|(x, y)| (w + y) == (x + h) && x < w),
+                &(|(x, _)| x),
+                &(|(wf, _), (x, _)| wf < x),
+            );
             // rightdown
-            {
-                let mut board : Vec<_> = self.colors.iter()
-                    .filter(|((x, y), _)| (w + y) == (x + h) && *x > w)
-                    .collect();
-                board.sort_by_key(|((x, _), _)| WIDTH - x);
-
-                if let Some((wf, _)) = find_same(&board) {
-                    let mut board = board.iter()
-                        .filter(|((x, _), _)|{
-                            wf > *x
-                        }).collect();
-                    add_revs(&board);
-                }
-            }
+            search(
+                &(|(x, y)| (w + y) == (x + h) && x > w),
+                &(|(x, _)| WIDTH - x),
+                &(|(wf, _), (x, _)| wf > x),
+            );
             // leftdown
-            {
-                let mut board : Vec<_> = self.colors.iter()
-                    .filter(|((x, y), _)| (w + h) == (x + y) && *x < w)
-                    .collect();
-                board.sort_by_key(|((x, _), _)| x);
-
-                if let Some((wf, _)) = find_same(&board) {
-                    let mut board = board.iter()
-                        .filter(|((x, _), _)|{
-                            wf < *x
-                        }).collect();
-                    add_revs(&board);
-                }
-            }
+            search(
+                &(|(x, y)| (w + h) == (x + y) && x < w),
+                &(|(x, _)| x),
+                &(|(wf, _), (x, _)| wf < x),
+            );
             // rightup
-            {
-                let mut board : Vec<_> = self.colors.iter()
-                    .filter(|((x, y), _)| (w + h) == (x + y) && *x > w)
-                    .collect();
-                board.sort_by_key(|((x, _), _)| WIDTH - x);
-
-                if let Some((wf, _)) = find_same(&board) {
-                    let mut board = board.iter()
-                        .filter(|((x, _), _)|{
-                            wf > *x
-                        }).collect();
-                    add_revs(&board);
-                }
-            }
-            
+            search(
+                &(|(x, y)| (w + h) == (x + y) && x > w),
+                &(|(x, _)| WIDTH - x),
+                &(|(wf, _), (x, _)| wf > x),
+            );
         }
 
         rev_cdns
