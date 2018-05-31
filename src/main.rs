@@ -11,9 +11,10 @@ enum Color {
 
 impl Color {
     fn rev(&self) -> Color {
+        use Color::{White, Black};
         match self {
-            Color::Black => Color::White,
-            Color::White => Color::Black,
+            Black => White,
+            White => Black,
         }
     }
 }
@@ -55,11 +56,20 @@ impl Board {
                 board.colors.insert((x, y), None);
             }
         }
+        
+        {
+            let mut insert = |cdn, color|{
+                board.colors.insert(cdn, Some(color));
+            };
 
-        board.colors.insert((3, 3), Some(Color::White));
-        board.colors.insert((4, 4), Some(Color::White));
-        board.colors.insert((3, 4), Some(Color::Black));
-        board.colors.insert((4, 3), Some(Color::Black));
+            let (x, y) = (WIDTH / 2, HEIGHT / 2);
+            use Color::{White, Black};
+
+            insert((x - 1, y - 1), White);
+            insert((x, y), White);
+            insert((x - 1, y), Black);
+            insert((x, y - 1), Black);
+        }
 
         board
     }
@@ -299,7 +309,7 @@ fn main() {
                     break 'main_loop;
                 }
             } else {
-                println!("Skip the player {}", &player);
+                println!("-*-Skiped the player {}-*-\n", &player);
                 player = player.rev();
                 continue 'main_loop;
             }
@@ -327,7 +337,7 @@ fn main() {
                 } else { None };
 
             result(winner);
-
+            board.print();
             break 'main_loop;
         }
         player = player.rev();
