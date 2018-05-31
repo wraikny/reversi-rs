@@ -20,14 +20,17 @@ impl Color {
 
 impl PartialEq for Color {
     fn eq(&self, other: &Color) -> bool {
-        if let Color::White = self {
-            if let Color::White = other {
-                true
-            } else {false}
-        } else {
-            if let Color::Black = other {
-                true
-            } else {false}
+        use Color::{Black, White};
+        
+        match self {
+            White => { match other {
+                White => true,
+                Black => false,
+            }},
+            Black => { match other {
+                White => false,
+                Black => true,
+            }},
         }
     }
 }
@@ -82,36 +85,39 @@ impl Board {
 
         let table = (0..HEIGHT).fold("".to_string(), |s, h| {
             format!("{}{}|{}\n", s, h, {
-                board.iter().filter(|((_, h_), _)| *h_ == h)
-                    .fold("".to_string(), |s, ((_, _), color)|{
-                        s + "" + match color {
-                            Some(Color::Black) => "B",
-                            Some(Color::White) => "W",
-                            None => " ",
-                        } + "|"
-                    })
+                board.iter()
+                .filter(|((_, h_), _)| *h_ == h)
+                .fold("".to_string(), |s, ((_, _), color)| {
+                    s + "" + match color {
+                        Some(Color::Black) => "B",
+                        Some(Color::White) => "W",
+                        None => " ",
+                    } + "|"
+                })
             })
         });
 
         println!("{}\n{}", head, table);
     }
 
-    fn rev_coodinates(
+    fn rev_cdns(
         &self, coodinate : (usize, usize), 
         player : &Color
     ) -> HashSet<(usize, usize)> {
-        let mut rev_cdns : HashSet<(usize, usize)> = HashSet::new();
+        let mut rev_cdns_set : HashSet<(usize, usize)> = HashSet::new();
 
         // if the coodinate in the keys and empty
         if self.colors.get(&coodinate).is_some() {
             let (w, h) = coodinate;
 
             let find_same = |board : &Vec<(&(usize, usize), &Option<Color>)>| {
-                let found = board.iter().rev().find(|(_, color)| {
-                    if let Some(color) = *color {
-                        color == player
-                    } else { false }
-                });
+                let found = board.iter()
+                    .rev()
+                    .find(|(_, color)| {
+                        if let Some(color) = *color {
+                            color == player
+                        } else { false }
+                    });
 
                 if let Some((cdn, _)) = found {
                     Some(**cdn)
@@ -121,13 +127,14 @@ impl Board {
             };
 
             let mut add_revs = |board : &Vec<&(&(usize, usize), &Option<Color>)>| {
-                if board.clone().iter().all(|(_, color)|{
+                if board.clone().iter()
+                    .all(|(_, color)|{
                         if let Some(color) = color {
                             color != player
                         } else { false }
                 }) {
                     board.iter().for_each(|(cdn, _)| {
-                        rev_cdns.insert(**cdn);
+                        rev_cdns_set.insert(**cdn);
                     });
                 }
             };
@@ -137,8 +144,10 @@ impl Board {
                 g : &Fn((usize, usize)) -> usize,
                 h : &Fn((usize, usize), (usize, usize)) -> bool,
             | {
-                let mut board : Vec<_> = self.colors.iter()
-                    .filter(|(item, _)| f(**item)).collect();
+                let mut board : Vec<_> = 
+                    self.colors.iter()
+                    .filter(|(item, _)| f(**item))
+                    .collect();
                 
                 board.sort_by_key(|(item, _)| g(**item));
 
@@ -151,49 +160,56 @@ impl Board {
                 }
             };
 
-            // upside
+            // Upside
             search(
                 &|(x, y)| x == w && y < h,
                 &|(_, y)| y,
                 &|(_, hf), (_, y)| hf < y,
             );
-            // downside
+
+            // Downside
             search(
                 &|(x, y)| x == w && y > h,
                 &|(_, y)| HEIGHT - y,
                 &|(_, hf), (_, y)| hf > y,
             );
-            // leftside
+
+            // Leftside
             search(
                 &|(x, y)| y == h && x < w,
                 &|(x, _)| x,
                 &|(wf, _), (x, _)| wf < x,
             );
-            // rightside
+
+            // Rightside
             search(
                 &|(x, y)| y == h && x > w,
                 &|(x, _)| WIDTH - x,
                 &|(wf, _), (x, _)| wf > x,
             );
-            // leftup
+
+            // Leftup
             search(
                 &|(x, y)| (w + y) == (x + h) && x < w,
                 &|(x, _)| x,
                 &|(wf, _), (x, _)| wf < x,
             );
-            // rightdown
+
+            // Rightdown
             search(
                 &|(x, y)| (w + y) == (x + h) && x > w,
                 &|(x, _)| WIDTH - x,
                 &|(wf, _), (x, _)| wf > x,
             );
-            // leftdown
+
+            // Leftdown
             search(
                 &|(x, y)| (w + h) == (x + y) && x < w,
                 &|(x, _)| x,
                 &|(wf, _), (x, _)| wf < x,
             );
-            // rightup
+
+            // Rightup
             search(
                 &|(x, y)| (w + h) == (x + y) && x > w,
                 &|(x, _)| WIDTH - x,
@@ -201,7 +217,7 @@ impl Board {
             );
         }
 
-        rev_cdns
+        rev_cdns_set
     }
 
     fn exist_nextto(&self, (w, h) : (usize, usize), player : &Color) -> bool {
@@ -210,9 +226,11 @@ impl Board {
             (-1, 0), (1, 0),
             (-1, 1), (0, 1), (1, 1),
         ];
-        v.iter().any(|k|{
-            let (x, y) = k;
-            let (w, h) = ((w as i32 - x) as usize, (h as i32 - y) as usize);
+
+        v.iter().any(|(x, y)| {
+            let (w, h) = (w as i32 - x, h as i32 - y);
+            let (w, h) = (w as usize, h as usize);
+
             if let Some(Some(color)) = self.colors.get(&(w, h)) {
                 *color == player.rev()
             } else {false}
@@ -221,18 +239,18 @@ impl Board {
 
     fn putable(&self, player : &Color) -> bool {
         self.colors.iter()
-        .any(|(cdn, color)|{
-            color.is_none() &&
-            self.exist_nextto(*cdn, player) && 
-            self.rev_coodinates(*cdn, &player).iter().count() > 0
-        })
+            .any(|(cdn, color)| {
+                color.is_none() &&
+                self.exist_nextto(*cdn, player) && 
+                self.rev_cdns(*cdn, &player).iter().count() > 0
+            })
     }
 
     fn put(&mut self, coodinate : (usize, usize), player : &Color) -> bool {
-        let rev_coodinates = self.rev_coodinates(coodinate, player);
-        if rev_coodinates.iter().count() > 0 {
+        let rev_cdns = self.rev_cdns(coodinate, player);
+        if rev_cdns.iter().count() > 0 {
             self.colors.insert(coodinate, Some(*player));
-            for cdn in rev_coodinates {
+            for cdn in rev_cdns {
                 self.rev(cdn);
             }
             true
@@ -330,7 +348,6 @@ fn main() {
                 }).count();
             
             let white_num = count_color(Color::White);
-            
             let black_num = count_color(Color::Black);
             
             let winner =
