@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 const WIDTH : usize = 8;
 const HEIGHT : usize = 8;
 
@@ -26,61 +28,90 @@ impl std::fmt::Display for Color {
 }
 
 struct Board {
-    colors: [[Option<Color>; WIDTH]; HEIGHT],
+    colors: HashMap<(usize, usize), Option<Color>>,
 }
 
 impl Board {
     fn new() -> Board {
-        let mut board = Board{colors: [[None; 8]; 8]};
-        board.put(Color::White, (3, 3));
-        board.put(Color::White, (4, 4));
-        board.put(Color::Black, (3, 4));
-        board.put(Color::Black, (4, 3));
+        let mut board = Board{
+            colors: HashMap::new()
+        };
+        for x in 0..WIDTH {
+            for y in 0..HEIGHT {
+                board.colors.insert((x, y), None);
+            }
+        }
+        board.colors.insert((3, 3), Some(Color::White));
+        board.colors.insert((4, 4), Some(Color::White));
+        board.colors.insert((3, 4), Some(Color::Black));
+        board.colors.insert((4, 3), Some(Color::Black));
         board
     }
 
     fn print(&self) {
+        let mut table : Vec<_> = self.colors.iter().collect();
+        table.sort_by_key(|((w, _), _)| w);
+        let table = table;
+
         let head = (0..WIDTH).fold(" ".to_string(), |s, x| format!("{} {}", s, x));
-        let result = self.colors.iter().enumerate().map(|(i, x)| {
-            x.iter().fold(format!("{}|", i).to_string(), |s, y| {
-                s + "" + match y {
-                    Some(Color::Black) => "B",
-                    Some(Color::White) => "W",
-                    None => " ",
-                } + "|"
+
+        let table = (0..HEIGHT).fold("".to_string(), |s, h| {
+            format!("{}{}|{}\n", s, h, {
+                table.iter().filter(|((_, h_), _)| *h_ == h)
+                    .fold("".to_string(), |s, ((_, _), color)|{
+                        s + "" + match color {
+                            Some(Color::Black) => "B",
+                            Some(Color::White) => "W",
+                            None => " ",
+                        } + "|"
+                    })
             })
-        }).fold("".to_string(), |s, x| s + &x + "\n");
+        });
 
-        println!("{}\n{}", head, result);
+        println!("{}\n{}", head, table);
     }
 
-    fn put(&mut self, color: Color, (w, h): (usize, usize)) -> bool {
+    fn put(&mut self, cdn : (usize, usize), player : &Color) {
+        let (w, h) = cdn;
         if w < WIDTH && h < HEIGHT {
-            match self.colors[h][w] {
-                None => {
-                    self.colors[h][w] = Some(color);
-                    true
-                },
-                _ => false,
+            if let None = self.colors[&cdn] {
+                self.colors.insert(cdn, Some(*player));
             }
-        } else {
-            false
         }
     }
+}
 
-    fn rev(&mut self, (w, h) : (usize, usize)) -> bool {
-        if w < WIDTH && h < HEIGHT {
-            match self.colors[h][w] {
-                Some(c) => {
-                    self.colors[h][w] = Some(c.rev());
-                    true
-                },
-                _ => false,
-            }
-        } else {
-            false
+fn read_cdn(player : &Color) -> Option<(usize, usize)> {
+    let mut coodinate : Option<(usize, usize)> = None;
+        
+    while let None = coodinate {
+        println!("Input coodinate of {} as 'w h'.(q: end)", player);
+        let mut read = String::new();
+        std::io::stdin().read_line(&mut read)
+            .expect("Failed to read line.");
+        
+        // Quit the gam.
+        if read.trim() == "q".to_string() {
+            return None;
         }
-    }
+
+        let mut c = read.split_whitespace().map(|x| {
+                match x.trim().parse::<usize>() {
+                    Ok(num) => Some(num),
+                    Err(_) => None,
+                }
+            });
+        
+        if let (Some(Some(w)), Some(Some(h))) = (c.next(), c.next()) {
+            if w < WIDTH && h < HEIGHT {
+                coodinate = Some((w, h));
+                break;
+            }
+        }
+        println!("Input correct coodinate!");
+    };
+
+    coodinate
 }
 
 fn main() {
@@ -94,37 +125,13 @@ fn main() {
 
     'main_loop: while let None = winner {
         board.print();
-        let mut coodinate : Option<(usize, usize)> = None;
-        
-        while let None = coodinate {
-            println!("Please input {} coodinate.(q: end)", &player);
-            let mut read = String::new();
-            std::io::stdin().read_line(&mut read)
-                .expect("Failed to read line.");
-            
-            if read.trim() == "q".to_string() {
-                break 'main_loop;
-            }
-
-            let mut c = read.split_whitespace().map(|x| {
-                    match x.trim().parse::<usize>() {
-                        Ok(num) => Some(num),
-                        Err(_) => None,
-                    }
-                });
-            if let (Some(Some(w)), Some(Some(h))) = (c.next(), c.next()) {
-                if w < WIDTH && h < HEIGHT {
-                    coodinate = Some((w, h));
-                    break;
-                }
-            }
-            println!("Input correctly!");
-        };
+        let mut coodinate : Option<(usize, usize)> = read_cdn(&player);
 
         if let Some((w, h)) = coodinate {
-            println!("({}, {})", w, h);
+            board.put((w, h), &player);
 
-            board.put(player, (w, h));
+        } else {
+            break 'main_loop;
         }
 
         player = player.rev();
