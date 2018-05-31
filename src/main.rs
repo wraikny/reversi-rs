@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const WIDTH : usize = 8;
 const HEIGHT : usize = 8;
@@ -18,6 +18,20 @@ impl Color {
     }
 }
 
+impl PartialEq for Color {
+    fn eq(&self, other: &Color) -> bool {
+        if let Color::White = self {
+            if let Color::White = other {
+                true
+            } else {false}
+        } else {
+            if let Color::Black = other {
+                true
+            } else {false}
+        }
+    }
+}
+
 impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", match self {
@@ -27,37 +41,38 @@ impl std::fmt::Display for Color {
     }
 }
 
+#[derive(Clone)]
 struct Board {
     colors: HashMap<(usize, usize), Option<Color>>,
 }
 
 impl Board {
     fn new() -> Board {
-        let mut board = Board{
-            colors: HashMap::new()
-        };
+        let mut board = Board{colors: HashMap::new()};
+
         for x in 0..WIDTH {
             for y in 0..HEIGHT {
                 board.colors.insert((x, y), None);
             }
         }
+
         board.colors.insert((3, 3), Some(Color::White));
         board.colors.insert((4, 4), Some(Color::White));
         board.colors.insert((3, 4), Some(Color::Black));
         board.colors.insert((4, 3), Some(Color::Black));
+
         board
     }
 
     fn print(&self) {
-        let mut table : Vec<_> = self.colors.iter().collect();
-        table.sort_by_key(|((w, _), _)| w);
-        let table = table;
-
         let head = (0..WIDTH).fold(" ".to_string(), |s, x| format!("{} {}", s, x));
+
+        let mut board : Vec<_> = self.colors.iter().collect();
+        board.sort_by_key(|((w, _), _)| w);
 
         let table = (0..HEIGHT).fold("".to_string(), |s, h| {
             format!("{}{}|{}\n", s, h, {
-                table.iter().filter(|((_, h_), _)| *h_ == h)
+                board.iter().filter(|((_, h_), _)| *h_ == h)
                     .fold("".to_string(), |s, ((_, _), color)|{
                         s + "" + match color {
                             Some(Color::Black) => "B",
@@ -71,17 +86,212 @@ impl Board {
         println!("{}\n{}", head, table);
     }
 
-    fn put(&mut self, cdn : (usize, usize), player : &Color) {
-        let (w, h) = cdn;
-        if w < WIDTH && h < HEIGHT {
-            if let None = self.colors[&cdn] {
-                self.colors.insert(cdn, Some(*player));
+    fn rev_coodinates(&self, coodinate : (usize, usize), player : &Color) -> HashSet<(usize, usize)> {
+        let mut rev_cdns : HashSet<(usize, usize)> = HashSet::new();
+
+        // if the coodinate in the keys and empty
+        if let Some(None) = self.colors.get(&coodinate) {
+            let (w, h) = coodinate;
+
+            let find_same = |board : &Vec<(&(usize, usize), &Option<Color>)>| {
+                let found = board.iter().rev().find(|(_, color)| {
+                    if let Some(color) = *color {
+                        color == player
+                    } else { false }
+                });
+
+                if let Some((cdn, _)) = found {
+                    Some(**cdn)
+                } else {
+                    None
+                }
+            };
+
+            let mut add_revs = |board : &Vec<&(&(usize, usize), &Option<Color>)>| {
+                if board.clone().iter().all(|(_, color)|{
+                        if let Some(color) = color {
+                            color != player
+                        } else { false }
+                }) {
+                    board.iter().for_each(|(cdn, _)| {rev_cdns.insert(**cdn);});
+                }
+            };
+
+            // upside
+            {
+                let mut board : Vec<_> = self.colors.iter()
+                    .filter(|((x, y), _)| *x == w && *y < h)
+                    .collect();
+                board.sort_by_key(|((_, y), _)| y);
+
+                if let Some((_, hf)) = find_same(&board) {
+                    let mut board = board.iter()
+                        .filter(|((_, y), _)|{
+                            hf < *y
+                        }).collect();
+                    add_revs(&board);
+                }
             }
+            // downside
+            {
+                let mut board : Vec<_> = self.colors.iter()
+                    .filter(|((x, y), _)| *x == w && *y > h)
+                    .collect();
+                board.sort_by_key(|((_, y), _)| HEIGHT - y);
+
+                if let Some((_, hf)) = find_same(&board) {
+                    let mut board = board.iter()
+                        .filter(|((_, y), _)|{
+                            hf > *y
+                        }).collect();
+                    add_revs(&board);
+                }
+            }
+            // leftside
+            {
+                let mut board : Vec<_> = self.colors.iter()
+                    .filter(|((x, y), _)| *y == h && *x < w)
+                    .collect();
+                board.sort_by_key(|((x, _), _)| x);
+
+                if let Some((wf, _)) = find_same(&board) {
+                    let mut board = board.iter()
+                        .filter(|((x, _), _)|{
+                            wf < *x
+                        }).collect();
+                    add_revs(&board);
+                }
+            }
+            // rightside
+            {
+                let mut board : Vec<_> = self.colors.iter()
+                    .filter(|((x, y), _)| *y == h && *x > w)
+                    .collect();
+                board.sort_by_key(|((x, _), _)| WIDTH - x);
+
+                if let Some((wf, _)) = find_same(&board) {
+                    let mut board = board.iter()
+                        .filter(|((x, _), _)|{
+                            wf > *x
+                        }).collect();
+                    add_revs(&board);
+                }
+            }
+            
+            // leftup
+            {
+                let mut board : Vec<_> = self.colors.iter()
+                    .filter(|((x, y), _)| (w + y) == (x + h) && *x < w)
+                    .collect();
+                board.sort_by_key(|((x, _), _)| x);
+
+                if let Some((wf, _)) = find_same(&board) {
+                    let mut board = board.iter()
+                        .filter(|((x, _), _)|{
+                            wf < *x
+                        }).collect();
+                    add_revs(&board);
+                }
+            }
+            
+            // rightdown
+            {
+                let mut board : Vec<_> = self.colors.iter()
+                    .filter(|((x, y), _)| (w + y) == (x + h) && *x > w)
+                    .collect();
+                board.sort_by_key(|((x, _), _)| WIDTH - x);
+
+                if let Some((wf, _)) = find_same(&board) {
+                    let mut board = board.iter()
+                        .filter(|((x, _), _)|{
+                            wf > *x
+                        }).collect();
+                    add_revs(&board);
+                }
+            }
+            // leftdown
+            {
+                let mut board : Vec<_> = self.colors.iter()
+                    .filter(|((x, y), _)| (w + h) == (x + y) && *x < w)
+                    .collect();
+                board.sort_by_key(|((x, _), _)| x);
+
+                if let Some((wf, _)) = find_same(&board) {
+                    let mut board = board.iter()
+                        .filter(|((x, _), _)|{
+                            wf < *x
+                        }).collect();
+                    add_revs(&board);
+                }
+            }
+            // rightup
+            {
+                let mut board : Vec<_> = self.colors.iter()
+                    .filter(|((x, y), _)| (w + h) == (x + y) && *x > w)
+                    .collect();
+                board.sort_by_key(|((x, _), _)| WIDTH - x);
+
+                if let Some((wf, _)) = find_same(&board) {
+                    let mut board = board.iter()
+                        .filter(|((x, _), _)|{
+                            wf > *x
+                        }).collect();
+                    add_revs(&board);
+                }
+            }
+            
+        }
+
+        rev_cdns
+    }
+
+    fn exist_nextto(&self, (w, h) : (usize, usize), player : &Color) -> bool {
+        let v = vec![
+            (-1, -1), (0, -1), (1, -1),
+            (-1, 0), (1, 0),
+            (-1, 1), (0, 1), (1, 1),
+        ];
+        v.iter().any(|k|{
+            let (x, y) = k;
+            let (w, h) = ((w as i32 - x) as usize, (h as i32 - y) as usize);
+            if let Some(Some(color)) = self.colors.get(&(w, h)) {
+                *color == player.rev()
+            } else {false}
+        })
+    }
+
+    fn putable(&self, player : &Color) -> bool {
+        self.colors.iter()
+        .any(|(cdn, color)|{
+            if let None = color {
+                self.exist_nextto(*cdn, player) && 
+                self.rev_coodinates(*cdn, &player).iter().count() > 0
+            } else {false}
+        })
+    }
+
+    fn put(&mut self, coodinate : (usize, usize), player : &Color) -> bool {
+        let rev_coodinates = self.rev_coodinates(coodinate, player);
+        if rev_coodinates.iter().count() > 0 {
+            self.colors.insert(coodinate, Some(*player));
+            for cdn in rev_coodinates {
+                self.rev(cdn);
+            }
+            true
+        } else {
+            println!("-*-You can't put there.-*-");
+            false
+        }
+    }
+
+    fn rev(&mut self, coodinate : (usize, usize)) {
+        if let Some(Some(color)) = self.colors.get(&coodinate) {
+            self.colors.insert(coodinate, Some(color.rev()));
         }
     }
 }
 
-fn read_cdn(player : &Color) -> Option<(usize, usize)> {
+fn read_coodinate(player : &Color) -> Option<(usize, usize)> {
     let mut coodinate : Option<(usize, usize)> = None;
         
     while let None = coodinate {
@@ -105,10 +315,12 @@ fn read_cdn(player : &Color) -> Option<(usize, usize)> {
         if let (Some(Some(w)), Some(Some(h))) = (c.next(), c.next()) {
             if w < WIDTH && h < HEIGHT {
                 coodinate = Some((w, h));
-                break;
+            } else {
+                println!("-*- ({}, {}) is out of range. -*-", w, h)
             }
+        } else {
+            println!("-*- Input correctly. -*-")
         }
-        println!("Input correct coodinate!");
     };
 
     coodinate
@@ -125,15 +337,49 @@ fn main() {
 
     'main_loop: while let None = winner {
         board.print();
-        let mut coodinate : Option<(usize, usize)> = read_cdn(&player);
+        loop {
+            if board.putable(&player) {
+                let mut coodinate = read_coodinate(&player);
 
-        if let Some((w, h)) = coodinate {
-            board.put((w, h), &player);
+                if let Some((w, h)) = coodinate {
+                    if board.put((w, h), &player) {
+                        break;
+                    }
+                } else {
+                    break 'main_loop;
+                }
+            } else {
+                println!("Skip the player {}", &player);
+            }
+        }
 
-        } else {
-            break 'main_loop;
+        if board.colors.iter()
+            .filter(|(_, color)| if let None = color {true} else {false})
+            .count() == 0 {
+                let white_num = board.colors.iter()
+                    .filter(|(_, color)| {
+                        if let Some(Color::White) = color {true} else {false}
+                    }).count();
+                
+                let black_num = board.colors.iter()
+                    .filter(|(_, color)| {
+                        if let Some(Color::White) = color {true} else {false}
+                    }).count();
+                
+                winner = if white_num > black_num {
+                    Some(Color::White)
+                } else if white_num < black_num  {
+                    Some(Color::Black)
+                } else { None };
+
+                break 'main_loop;
         }
 
         player = player.rev();
     }
+
+    if let Some(color) = winner {
+        println!("{} win!", color);
+    }
+    
 }
