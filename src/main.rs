@@ -138,52 +138,52 @@ impl Board {
 
             // upside
             search(
-                &(|(x, y)| x == w && y < h),
-                &(|(_, y)| y),
-                &(|(_, hf), (_, y)| hf < y),
+                &|(x, y)| x == w && y < h,
+                &|(_, y)| y,
+                &|(_, hf), (_, y)| hf < y,
             );
             
             // downside
             search(
-                &(|(x, y)| x == w && y > h),
-                &(|(_, y)| HEIGHT - y),
-                &(|(_, hf), (_, y)| hf > y),
+                &|(x, y)| x == w && y > h,
+                &|(_, y)| HEIGHT - y,
+                &|(_, hf), (_, y)| hf > y,
             );
             // leftside
             search(
-                &(|(x, y)| y == h && x < w),
-                &(|(x, _)| x),
-                &(|(wf, _), (x, _)| wf < x),
+                &|(x, y)| y == h && x < w,
+                &|(x, _)| x,
+                &|(wf, _), (x, _)| wf < x,
             );
             // rightside
             search(
-                &(|(x, y)| y == h && x > w),
-                &(|(x, _)| WIDTH - x),
-                &(|(wf, _), (x, _)| wf > x),
+                &|(x, y)| y == h && x > w,
+                &|(x, _)| WIDTH - x,
+                &|(wf, _), (x, _)| wf > x,
             );
             // leftup
             search(
-                &(|(x, y)| (w + y) == (x + h) && x < w),
-                &(|(x, _)| x),
-                &(|(wf, _), (x, _)| wf < x),
+                &|(x, y)| (w + y) == (x + h) && x < w,
+                &|(x, _)| x,
+                &|(wf, _), (x, _)| wf < x,
             );
             // rightdown
             search(
-                &(|(x, y)| (w + y) == (x + h) && x > w),
-                &(|(x, _)| WIDTH - x),
-                &(|(wf, _), (x, _)| wf > x),
+                &|(x, y)| (w + y) == (x + h) && x > w,
+                &|(x, _)| WIDTH - x,
+                &|(wf, _), (x, _)| wf > x,
             );
             // leftdown
             search(
-                &(|(x, y)| (w + h) == (x + y) && x < w),
-                &(|(x, _)| x),
-                &(|(wf, _), (x, _)| wf < x),
+                &|(x, y)| (w + h) == (x + y) && x < w,
+                &|(x, _)| x,
+                &|(wf, _), (x, _)| wf < x,
             );
             // rightup
             search(
-                &(|(x, y)| (w + h) == (x + y) && x > w),
-                &(|(x, _)| WIDTH - x),
-                &(|(wf, _), (x, _)| wf > x),
+                &|(x, y)| (w + h) == (x + y) && x > w,
+                &|(x, _)| WIDTH - x,
+                &|(wf, _), (x, _)| wf > x,
             );
         }
 
