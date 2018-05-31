@@ -90,7 +90,7 @@ impl Board {
         let mut rev_cdns : HashSet<(usize, usize)> = HashSet::new();
 
         // if the coodinate in the keys and empty
-        if let Some(None) = self.colors.get(&coodinate) {
+        if self.colors.get(&coodinate).is_some() {
             let (w, h) = coodinate;
 
             let find_same = |board : &Vec<(&(usize, usize), &Option<Color>)>| {
@@ -208,7 +208,7 @@ impl Board {
     fn putable(&self, player : &Color) -> bool {
         self.colors.iter()
         .any(|(cdn, color)|{
-            if let None = color {
+            if color.is_none() {
                 self.exist_nextto(*cdn, player) && 
                 self.rev_coodinates(*cdn, &player).iter().count() > 0
             } else {false}
@@ -325,5 +325,7 @@ fn main() {
 
     if let Some(color) = winner {
         println!("{} win!", color);
+    } else {
+        println!("Draw");
     }
 }
