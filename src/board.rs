@@ -48,15 +48,14 @@ impl Board {
         board.sort_by_key(|((w, _), _)| w);
 
         let table = (0..height).fold("".to_string(), |s, h| {
-            format!("{}{}|{}\n", s, h, {
+            format!("{}{} {}\n", s, h, {
                 board.iter()
                 .filter(|((_, h_), _)| *h_ == h)
                 .fold("".to_string(), |s, ((_, _), color)| {
                     s + "" + match color {
-                        Some(Color::Black) => "B",
-                        Some(Color::White) => "W",
-                        None => " ",
-                    } + "|"
+                        Some(c) => c.sym(),
+                        None => "-",
+                    } + " "
                 })
             })
         });

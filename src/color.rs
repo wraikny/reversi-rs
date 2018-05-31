@@ -13,6 +13,13 @@ impl Color {
             Color::White => Color::Black,
         }
     }
+
+    pub fn sym(&self) -> &str {
+        match self {
+            Color::Black => "*",
+            Color::White => "o",
+        }
+    }
 }
 
 impl PartialEq for Color {
@@ -34,9 +41,11 @@ impl PartialEq for Color {
 
 impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match self {
+        write!(f, "{}({})", match self {
             Color::Black => "Black",
             Color::White => "White",
-        })
+        }, 
+        self.sym()
+        )
     }
 }
