@@ -295,29 +295,30 @@ fn main() {
                 }
             } else {
                 println!("Skip the player {}", &player);
+                break;
             }
         }
 
         if board.colors.iter()
             .filter(|(_, color)| color.is_none())
-            .count() == 0 {
-                let white_num = board.colors.iter()
-                    .filter(|(_, color)| {
-                        if let Some(Color::White) = color {true} else {false}
-                    }).count();
-                
-                let black_num = board.colors.iter()
-                    .filter(|(_, color)| {
-                        if let Some(Color::Black) = color {true} else {false}
-                    }).count();
-                
-                winner = if white_num > black_num {
-                    Some(Color::White)
-                } else if white_num < black_num  {
-                    Some(Color::Black)
-                } else { None };
+            .count() == 0 
+        {
+            let count_color = |col : Color| board.colors.iter()
+                .filter(|(_, color)| {
+                    if let Some(c) = color {col == *c} else {false}
+                }).count();
+            
+            let white_num = count_color(Color::White);
+            
+            let black_num = count_color(Color::Black);
+            
+            winner = if white_num > black_num {
+                Some(Color::White)
+            } else if white_num < black_num  {
+                Some(Color::Black)
+            } else { None };
 
-                break 'main_loop;
+            break 'main_loop;
         }
 
         player = player.rev();
