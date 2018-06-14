@@ -6,6 +6,11 @@ use board::Board;
 const WIDTH : usize = 8;
 const HEIGHT : usize = 8;
 
+enum Input {
+    Coordinate((usize, usize)),
+    Quit,
+}
+
 fn get_board_size(filename : &str) -> (usize, usize) {
     use std::error::Error;
     use std::fs::File;
@@ -21,6 +26,7 @@ fn get_board_size(filename : &str) -> (usize, usize) {
         },
         Ok(file) => file,
     };
+    
 
     let mut s = String::new();
     match file.read_to_string(&mut s) {
@@ -46,11 +52,10 @@ fn get_board_size(filename : &str) -> (usize, usize) {
     }
 }
 
-fn read_coordinate(player : &Color, size : (usize, usize)) -> Option<(usize, usize)> {
+fn read_coordinate(player : &Color, size : (usize, usize)) -> Input {
     let (width, height) = size;
-    let mut coordinate : Option<(usize, usize)> = None;
     
-    while coordinate.is_none() {
+    loop {
         println!("Input coordinate of {} as 'w h'. (q: quit)", player);
         let mut read = String::new();
         std::io::stdin().read_line(&mut read)
@@ -60,38 +65,35 @@ fn read_coordinate(player : &Color, size : (usize, usize)) -> Option<(usize, usi
         
         // Quit the game.
         if read.trim() == "q".to_string() {
-            return None;
+            return Input::Quit;
         }
 
-        let mut c = read.split_whitespace().map(|x| {
+        let c : Vec<_> = read.split_whitespace().map(|x| {
                 match x.trim().parse::<usize>() {
                     Ok(num) => Some(num),
                     Err(_) => None,
                 }
-            });
+            }).collect();
         
-        if let (Some(Some(w)), Some(Some(h))) = (c.next(), c.next()) {
-            if w < width && h < height {
-                coordinate = Some((w, h));
+        if let (Some(Some(w)), Some(Some(h))) = (c.get(0), c.get(1)) {
+            if w < &width && h < &height {
+                return Input::Coordinate((*w, *h));
             } else {
                 println!("-*- ({}, {}) is out of range. -*-\n", w, h)
             }
         } else {
             println!("-*- Input correctly. -*-\n")
         }
-    };
-    coordinate
+    }
 }
 
 pub fn start() {
     println!("Reversi!!!!!\n");
 
     let size = get_board_size("config.csv");
-
     println!("The Board size is {:?}.\n", size);
 
     let mut board = Board::new(size);
-
     let mut player = Color::Black;
 
     let result = |color : Option<Color>| {
@@ -103,19 +105,17 @@ pub fn start() {
     };
 
     'main_loop: loop {
-
         board.display();
 
         'input: loop {
             if board.putable(&player) {
                 let coordinate = read_coordinate(&player, size);
 
-                if let Some(cdn) = coordinate {
-                    if board.put(cdn, &player) {
+                match coordinate {
+                    Input::Coordinate(cdn) => if board.put(cdn, &player) {
                         break 'input;
-                    }
-                } else {
-                    break 'main_loop;
+                    },
+                    Input::Quit => break 'main_loop,
                 }
             } else {
                 println!("-*-Skiped the player {}-*-\n", &player);
