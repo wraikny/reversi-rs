@@ -3,15 +3,12 @@ use std;
 use color::Color;
 use board::Board;
 
-const WIDTH : usize = 8;
-const HEIGHT : usize = 8;
-
 enum Input {
     Coordinate((usize, usize)),
     Quit,
 }
 
-fn get_board_size(filename : &str) -> (usize, usize) {
+fn get_board_size(filename : &str) -> Result<(usize, usize), String> {
     use std::error::Error;
     use std::fs::File;
     use std::io::prelude::*;
@@ -21,8 +18,7 @@ fn get_board_size(filename : &str) -> (usize, usize) {
 
     let mut file = match File::open(&path) {
         Err(why) => {
-            println!("Couldn't open {}: {}", filename, Error::description(&why));
-            return (WIDTH, HEIGHT);
+            return Err(format!("Couldn't open {}: {}", filename, Error::description(&why)));
         },
         Ok(file) => file,
     };
@@ -31,24 +27,18 @@ fn get_board_size(filename : &str) -> (usize, usize) {
     let mut s = String::new();
     match file.read_to_string(&mut s) {
         Err(why) => {
-            println!("Couldn't read {}: {}", filename, Error::description(&why));
-            return (WIDTH, HEIGHT);
+            return Err(format!("Couldn't read {}: {}", filename, Error::description(&why)));
         },
         Ok(_) => (),
     }
 
     let mut s = s.split(",")
-        .map(|x| {
-            match x.trim().parse::<usize>() {
-                Ok(num) => Some(num),
-                Err(_) => None,
-            }
-        });
+        .map(|x| x.trim().parse::<usize>());
 
-    if let (Some(Some(w)), Some(Some(h))) = (s.next(), s.next()) {
-        (w, h)
+    if let (Some(Ok(w)), Some(Ok(h))) = (s.next(), s.next()) {
+        Ok((w, h))
     } else {
-        (WIDTH, HEIGHT)
+        Err("The format of the file of the board size is not correct.\nExample: 8, 8".to_owned())
     }
 }
 
@@ -68,14 +58,10 @@ fn read_coordinate(player : &Color, size : (usize, usize)) -> Input {
             return Input::Quit;
         }
 
-        let c : Vec<_> = read.split_whitespace().map(|x| {
-                match x.trim().parse::<usize>() {
-                    Ok(num) => Some(num),
-                    Err(_) => None,
-                }
-            }).collect();
+        let c : Vec<_> = read.split_whitespace()
+            .map(|x| x.trim().parse::<usize>()).collect();
         
-        if let (Some(Some(w)), Some(Some(h))) = (c.get(0), c.get(1)) {
+        if let (Some(Ok(w)), Some(Ok(h))) = (c.get(0), c.get(1)) {
             if w < &width && h < &height {
                 return Input::Coordinate((*w, *h));
             } else {
@@ -87,10 +73,10 @@ fn read_coordinate(player : &Color, size : (usize, usize)) -> Input {
     }
 }
 
-pub fn start() {
-    println!("Reversi!!!!!\n");
+pub fn start() -> Result<(), String> {
+    let size = get_board_size("config.csv")?;
 
-    let size = get_board_size("config.csv");
+    println!("Reversi!!!!!\n");
     println!("The Board size is {:?}.\n", size);
 
     let mut board = Board::new(size);
@@ -132,4 +118,5 @@ pub fn start() {
 
         player = player.rev();
     }
+    Ok(())
 }

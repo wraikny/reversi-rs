@@ -9,18 +9,15 @@ pub struct Board {
 
 impl Board {
     pub fn new(size : (usize, usize)) -> Board {
-        let mut board = Board{
-            colors: HashMap::new(), 
-            size : size,
-        };
-
         let (width, height) = size;
 
-        for x in 0..width {
-            for y in 0..height {
-                board.colors.insert((x, y), None);
-            }
-        }
+        let colors = (0..width).into_iter()
+            .flat_map(|x| {
+                (0..height).into_iter()
+                    .map(move |y| ((x, y), None))
+            }).collect();
+
+        let mut board = Board{colors, size};
         
         {
             let mut insert = |cdn, color|{

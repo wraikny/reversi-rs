@@ -1,5 +1,7 @@
 extern crate reversi;
 
 fn main() {
-    reversi::game::start();
+    if let Err(e) = reversi::game::start() {
+        println!("{}", e);
+    }
 }
