@@ -42,8 +42,12 @@ fn eval(board : &Board, player : &Color, cs : &Setting) -> i32 {
     ];
 
     let count_corner = |c| {
-        board.putable_cdns(&c).into_par_iter()
-            .filter(|cdn| corners.contains(&cdn)).count() as i32
+        board.filter(|cdn| corners.contains(&cdn))
+            .filter(|(_, color)|
+                if let Some(color) = color {
+                    *color == c
+                } else {false}
+            ).count() as i32
     };
 
     let next_corner = |c| {
