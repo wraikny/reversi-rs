@@ -1,19 +1,22 @@
 use std::collections::{HashMap, HashSet};
 use color::Color;
 
+extern crate rayon;
+use board::rayon::prelude::*;
+
 #[derive(Clone)]
 pub struct Board {
-    colors : HashMap<(usize, usize), Option<Color>>,
-    pub size : (usize, usize),
+    pub(crate) colors : HashMap<(usize, usize), Option<Color>>,
+    pub(crate) size : (usize, usize),
 }
 
 impl Board {
-    pub fn new(size : (usize, usize)) -> Board {
+    pub(crate) fn new(size : (usize, usize)) -> Board {
         let (width, height) = size;
 
-        let colors = (0..width).into_iter()
+        let colors = (0..width).into_par_iter()
             .flat_map(|x| {
-                (0..height).into_iter()
+                (0..height).into_par_iter()
                     .map(move |y| ((x, y), None))
             }).collect();
 
@@ -37,7 +40,7 @@ impl Board {
         board
     }
 
-    pub fn display(&self) {
+    pub(crate) fn display(&self) {
         let (width, height) = self.size;
 
         let current = format!("{}:{}\n{}:{}\n", 
@@ -93,7 +96,7 @@ impl Board {
             };
 
             let mut add_revs = |board : &Vec<&(&(usize, usize), &Option<Color>)>| {
-                if board.clone().iter()
+                if board.clone().par_iter()
                     .all(|(_, color)|{
                         if let Some(color) = color {
                             color != player
@@ -195,7 +198,7 @@ impl Board {
             (-1, 1), (0, 1), (1, 1),
         ];
 
-        v.iter().any(|(x, y)| {
+        v.par_iter().any(|(x, y)| {
             let (w, h) = (w as i32 - x, h as i32 - y);
             let (w, h) = (w as usize, h as usize);
 
@@ -205,18 +208,22 @@ impl Board {
         })
     }
 
-    pub fn putable(&self, player : &Color) -> bool {
-        self.colors.iter()
-            .any(|(cdn, color)| {
+    pub(crate) fn putable_cdns(&self, player : &Color) -> Vec<(usize, usize)> {
+        self.colors.par_iter()
+            .filter(|(cdn, color)| {
                 color.is_none() &&
-                self.exist_nextto(*cdn, player) && 
-                self.rev_cdns(*cdn, &player).iter().count() > 0
-            })
+                self.exist_nextto(**cdn, player) && 
+                self.rev_cdns(**cdn, &player).par_iter().count() > 0
+            }).map(|(cdn, _)| cdn.clone()).collect()
+    }
+
+    pub fn putable(&self, player : &Color) -> bool {
+        self.putable_cdns(player).len() > 0
     }
 
     pub fn put(&mut self, coordinate : (usize, usize), player : &Color) -> bool {
         let rev_cdns = self.rev_cdns(coordinate, player);
-        if rev_cdns.iter().count() > 0 {
+        if rev_cdns.par_iter().count() > 0 {
             self.colors.insert(coordinate, Some(*player));
             for cdn in rev_cdns {
                 self.rev(cdn);
@@ -235,14 +242,14 @@ impl Board {
     }
 
     pub fn finished(&self, player : &Color) -> bool {
-        self.colors.iter()
+        self.colors.par_iter()
             .filter(|(_, color)| color.is_none())
             .count() == 0 ||
             (!self.putable(player) && !self.putable(&player.rev()))
     }
 
     fn count_color(&self, col : Color) -> usize {
-        self.colors.iter()
+        self.colors.par_iter()
             .filter(|(_, color)| {
                 if let Some(c) = color {col == *c} else {false}
             }).count()
