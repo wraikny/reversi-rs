@@ -5,7 +5,7 @@ extern crate rayon;
 use board::rayon::prelude::*;
 
 #[derive(Clone)]
-pub struct Board {
+pub(crate) struct Board {
     pub(crate) colors : HashMap<(usize, usize), Option<Color>>,
     pub(crate) size : (usize, usize),
 }
@@ -217,22 +217,19 @@ impl Board {
             }).map(|(cdn, _)| cdn.clone()).collect()
     }
 
-    pub fn putable(&self, player : &Color) -> bool {
+    pub(crate) fn putable(&self, player : &Color) -> bool {
         self.putable_cdns(player).len() > 0
     }
 
-    pub fn put(&mut self, coordinate : (usize, usize), player : &Color) -> bool {
+    pub(crate) fn put(&mut self, coordinate : (usize, usize), player : &Color) -> &Board {
         let rev_cdns = self.rev_cdns(coordinate, player);
-        if rev_cdns.par_iter().count() > 0 {
+        if rev_cdns.len() > 0 {
             self.colors.insert(coordinate, Some(*player));
             for cdn in rev_cdns {
                 self.rev(cdn);
             }
-            true
-        } else {
-            println!("-*-You can't put there.-*-");
-            false
         }
+        self
     }
 
     fn rev(&mut self, coordinate : (usize, usize)) {
@@ -241,7 +238,7 @@ impl Board {
         }
     }
 
-    pub fn finished(&self, player : &Color) -> bool {
+    pub(crate) fn finished(&self, player : &Color) -> bool {
         self.colors.par_iter()
             .filter(|(_, color)| color.is_none())
             .count() == 0 ||
@@ -255,7 +252,7 @@ impl Board {
             }).count()
     }
 
-    pub fn winner(&self) -> Option<Color> {
+    pub(crate) fn winner(&self) -> Option<Color> {
         let white_num = self.count_color(Color::White);
         let black_num = self.count_color(Color::Black);
         

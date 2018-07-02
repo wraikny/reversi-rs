@@ -1,27 +1,27 @@
 use std::fmt;
 
 #[derive(Clone, Copy)]
-pub enum Color {
+pub(crate) enum Color {
     Black,
     White,
 }
 
 impl Color {
-    pub fn rev(&self) -> Color {
+    pub(crate) fn rev(&self) -> Color {
         match self {
             Color::Black => Color::White,
             Color::White => Color::Black,
         }
     }
 
-    pub fn sym(&self) -> &str {
+    pub(crate) fn sym(&self) -> &str {
         match self {
             Color::Black => "*",
             Color::White => "o",
         }
     }
 
-    pub fn sym_empty() -> &'static str {
+    pub(crate) fn sym_empty() -> &'static str {
         "-"
     }
 }
