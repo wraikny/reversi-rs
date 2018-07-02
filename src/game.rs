@@ -2,11 +2,7 @@ use std;
 
 use color::Color;
 use board::Board;
-
-enum Input {
-    Coordinate((usize, usize)),
-    Quit,
-}
+use cpu;
 
 fn get_board_size(filename : &str) -> Result<(usize, usize), String> {
     use std::error::Error;
@@ -42,16 +38,18 @@ fn get_board_size(filename : &str) -> Result<(usize, usize), String> {
     }
 }
 
-fn read_coordinate(player : &Color, size : (usize, usize)) -> Input {
+enum Input {
+    Coordinate((usize, usize)),
+    Quit,
+}
+
+fn read_coordinate(size : (usize, usize)) -> Input {
     let (width, height) = size;
     
     loop {
-        println!("Input coordinate of {} as 'w h'. (q: quit)", player);
         let mut read = String::new();
         std::io::stdin().read_line(&mut read)
             .expect("Failed to read line.");
-        
-        print!("\n");
         
         // Quit the game.
         if read.trim() == "q".to_string() {
@@ -65,58 +63,90 @@ fn read_coordinate(player : &Color, size : (usize, usize)) -> Input {
             if w < &width && h < &height {
                 return Input::Coordinate((*w, *h));
             } else {
-                println!("-*- ({}, {}) is out of range. -*-\n", w, h)
+                println!("-*- ({}, {}) is out of range. -*-", w, h)
             }
         } else {
-            println!("-*- Input correctly. -*-\n")
+            println!("-*- Input correctly. -*-")
         }
     }
 }
 
-pub fn start() -> Result<(), String> {
+fn result_game(color : Option<Color>) {
+    if let Some(color) = color {
+        println!("{} win!", color);
+    } else {
+        println!("Draw");
+    }
+}
+
+pub enum PlayerType {
+    Human,
+    Computer,
+}
+
+pub struct Setting {
+    pub black : PlayerType,
+    pub white : PlayerType,
+}
+
+pub fn start(setting : Setting) -> Result<(), String> {
     let size = get_board_size("config.csv")?;
 
-    println!("Reversi!!!!!\n");
+    println!("Reversi!");
     println!("The Board size is {:?}.\n", size);
 
-    let mut board = Board::new(size);
-    let mut player = Color::Black;
+    let is_cpu = |t : &PlayerType| match *t {
+        PlayerType::Human => false,
+        PlayerType::Computer => true
+    };
 
-    let result = |color : Option<Color>| {
-        if let Some(color) = color {
-            println!("{} win!", color);
-        } else {
-            println!("Draw");
+    let color_is_cpu = |color : &Color| {
+        use color::Color::*;
+        match *color {
+            Black => is_cpu(&setting.black),
+            White => is_cpu(&setting.white),
         }
     };
+
+    let mut board = Board::new(size);
+
+    let mut player = Color::Black;
 
     'main_loop: loop {
         board.display();
 
-        'input: loop {
-            if board.putable(&player) {
-                let coordinate = read_coordinate(&player, size);
+        if board.finished(&player) {
+            result_game(board.winner());
+            break 'main_loop;
+        }
+
+        if board.putable(&player) {
+            if !color_is_cpu(&player) {
+                println!("Input coordinate of {} as 'w h'. (q: quit)", &player);
+            }
+            'input: loop {
+                let coordinate = if !color_is_cpu(&player) {
+                    read_coordinate(size)
+                } else {
+                    Input::Coordinate(cpu::select(&player, &board).unwrap())
+                };
 
                 match coordinate {
-                    Input::Coordinate(cdn) => if board.put(cdn, &player) {
+                    Input::Coordinate(cdn) => if board.putable_cdns(&player).contains(&cdn) {
+                        board.put(cdn, &player);
                         break 'input;
+                    } else {
+                        println!("-*-Couldn't put there.-*-");
                     },
                     Input::Quit => break 'main_loop,
                 }
-            } else {
-                println!("-*-Skiped the player {}-*-\n", &player);
-                player = player.rev();
-                continue 'main_loop;
             }
-        }
-
-        if board.finished(&player) {
-            result(board.winner());
-            board.display();
-            break 'main_loop;
+        } else {
+            println!("-*-Skiped the player {}-*-", &player);
         }
 
         player = player.rev();
     }
+
     Ok(())
 }

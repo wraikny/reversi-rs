@@ -1,7 +1,13 @@
 extern crate reversi;
+use reversi::game::*;
 
 fn main() {
-    if let Err(e) = reversi::game::start() {
+    let setting = Setting {
+        black : PlayerType::Human,
+        white : PlayerType::Computer
+    };
+
+    if let Err(e) = start(setting) {
         println!("{}", e);
     }
 }
