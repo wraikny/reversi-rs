@@ -65,11 +65,13 @@ impl Setting {
     }
 }
 
-pub fn start(setting : Setting) -> Result<(), String> {
-    let size = setting.boardsize;
+pub fn start(setting : &Setting, cs : &cpu::Setting, display : bool) {
 
-    println!("Reversi!");
-    println!("The Board size is {:?}.\n", size);
+    let size = setting.boardsize;
+    if display {
+        println!("Reversi!");
+        println!("The Board size is {:?}.\n", size);
+    }
 
     let is_cpu = |c : &Color| match setting.player_type(c) {
         PlayerType::Human => false,
@@ -80,11 +82,22 @@ pub fn start(setting : Setting) -> Result<(), String> {
 
     let mut player = Color::Black;
 
+    let mut count = 0;
+
     'main_loop: loop {
-        board.display();
+        if display {
+            board.display();
+        } else {
+            print!("{}, ", count);
+            count = count + 1;
+        }
 
         if board.finished(&player) {
-            result_game(board.winner());
+            if !display {
+                println!();
+            }
+            let winner = board.winner();
+            result_game(winner);
             break 'main_loop;
         }
 
@@ -95,7 +108,7 @@ pub fn start(setting : Setting) -> Result<(), String> {
             'input: loop {
                 let coordinate = match setting.player_type(&player) {
                     PlayerType::Human => read_coordinate(size),
-                    PlayerType::Computer(depth) => Input::Coordinate(cpu::select(&player, &board, *depth).unwrap()),
+                    PlayerType::Computer(depth) => Input::Coordinate(cpu::select(&player, &board, *depth, cs).unwrap()),
                 };
 
                 match coordinate {
@@ -109,11 +122,11 @@ pub fn start(setting : Setting) -> Result<(), String> {
                 }
             }
         } else {
-            println!("-*-Skiped the player {}-*-", &player);
+            if display {
+                println!("-*-Skiped the player {}-*-", &player);
+            }
         }
 
         player = player.rev();
     }
-
-    Ok(())
 }

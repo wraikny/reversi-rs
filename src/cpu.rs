@@ -4,7 +4,29 @@ use color::Color;
 extern crate rayon;
 use cpu::rayon::prelude::*;
 
-fn eval(board : &Board, player : &Color) -> i32 {
+pub struct Setting {
+    pub(crate) puttable : i32,
+    pub(crate) corner : i32,
+    pub(crate) aroundcorner : i32,
+    pub(crate) wall : i32,
+    pub(crate) all : i32,
+    pub(crate) emptynum : usize,
+}
+
+impl Setting {
+    pub fn new(puttable : i32, corner : i32, aroundcorner : i32, wall : i32, all : i32, emptynum : usize) -> Setting {
+        Setting {
+            puttable,
+            corner,
+            aroundcorner,
+            wall,
+            all,
+            emptynum,
+        }
+    }
+}
+
+fn eval(board : &Board, player : &Color, cs : &Setting) -> i32 {
     let (mw, mh) = board.size;
     let (w, h) = (mw - 1, mh - 1);
 
@@ -49,18 +71,30 @@ fn eval(board : &Board, player : &Color) -> i32 {
 
     // p : player, o : oposite
     let (pc, oc) = (*player, player.rev());
+
     let (p, o) = (count(pc), count(oc));
     let (cp, co) = (count_corner(pc), count_corner(oc));
-    let (ncp, nco) = (next_corner(pc), next_corner(oc));
     let (wp, wo) = (on_wall(pc), on_wall(oc));
 
+    let en = board.colors.par_iter().filter(|(_, color)| color.is_none()).count();
+
     // Set good parameter
-    (p - o) * 5 + (cp - co) * 100 + (nco - ncp) * 20 + (wp - wo) * 2
+    if en < cs.emptynum {
+        let (pn, on) = (board.count_color(pc) as i32, board.count_color(oc) as i32);
+        (p - o) + (cp - co) + (wp - wo) + (pn - on) * cs.all
+    } else {
+        let (ncp, nco) = (next_corner(pc), next_corner(oc));
+
+        (p - o) * cs.puttable + 
+        (cp - co) * cs.corner + 
+        (nco - ncp) * cs.aroundcorner + 
+        (wp - wo) * cs.wall
+    }
 }
 
-fn alpha_beta(board : &Board, player : &Color, turn : Color, ev : (i32, i32), depth : usize) -> i32 {
+fn alpha_beta(board : &Board, player : &Color, turn : Color, ev : (i32, i32), depth : usize, cs : &Setting) -> i32 {
     let new = |cdn, ev| {
-        alpha_beta(board.clone().put(cdn, &turn), player, turn.rev(), ev, depth - 1)
+        alpha_beta(board.clone().put(cdn, &turn), player, turn.rev(), ev, depth - 1, cs)
     };
 
     let putable = board.putable(&turn);
@@ -73,7 +107,7 @@ fn alpha_beta(board : &Board, player : &Color, turn : Color, ev : (i32, i32), de
             0
         }
     } else if !putable || depth == 0 {
-        eval(&board, player)
+        eval(&board, player, cs)
     } else {
         let (mut a, mut b) = ev;
         if *player == turn {
@@ -92,7 +126,7 @@ fn alpha_beta(board : &Board, player : &Color, turn : Color, ev : (i32, i32), de
     }
 }
 
-pub(crate) fn select(player : &Color, board : &Board, depth : usize) -> Option<(usize, usize)> {
+pub(crate) fn select(player : &Color, board : &Board, depth : usize, cs : &Setting) -> Option<(usize, usize)> {
     let cdns = board.putable_cdns(player);
 
     if cdns.len() == 0 {
@@ -103,7 +137,7 @@ pub(crate) fn select(player : &Color, board : &Board, depth : usize) -> Option<(
         let fc = cdns[0].clone();
 
         let (cdn, _) = cdns.into_par_iter().map(|cdn| {
-            let v = alpha_beta(board.clone().put(cdn, player), player, *player, (-inf, inf), depth);
+            let v = alpha_beta(board.clone().put(cdn, player), player, *player, (-inf, inf), depth, cs);
             (cdn, v)
         }).reduce(|| (fc, -inf), |(cdn1, v1), (cdn2, v2)| {
             if v1 >= v2 {

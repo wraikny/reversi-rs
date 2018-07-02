@@ -245,7 +245,7 @@ impl Board {
             (!self.putable(player) && !self.putable(&player.rev()))
     }
 
-    fn count_color(&self, col : Color) -> usize {
+    pub(crate) fn count_color(&self, col : Color) -> usize {
         self.colors.par_iter()
             .filter(|(_, color)| {
                 if let Some(c) = color {col == *c} else {false}

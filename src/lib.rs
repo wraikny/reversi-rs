@@ -1,4 +1,4 @@
 pub mod game;
-mod cpu;
+pub mod cpu;
 mod board;
 mod color;
