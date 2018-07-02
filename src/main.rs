@@ -1,8 +1,6 @@
 extern crate reversi;
 use reversi::game::*;
 use reversi::cpu;
-// extern crate rayon;
-// use rayon::prelude::*;
 
 fn main() {
     let setting = Setting {
@@ -11,7 +9,7 @@ fn main() {
         boardsize : (8, 8),
     };
 
-    let cpu_setting = cpu::Setting::new(5, 50, 20, 1, 10, 50);
+    let cpu_setting = cpu::Setting::new(5, 50, 20, 1, 7, 50);
     
     start(&setting, &cpu_setting, true);
 }
