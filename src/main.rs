@@ -14,6 +14,6 @@ fn main() {
     let cpu_setting = cpu::Setting::new(5, 100, 20, 2, 10, 10);
     
     for _ in 0..10 {
-        start(&setting, &cpu_setting, false);
+        start(&setting, &cpu_setting, true);
     }
 }
