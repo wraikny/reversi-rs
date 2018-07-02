@@ -5,6 +5,7 @@ extern crate rayon;
 use cpu::rayon::prelude::*;
 
 pub struct Setting {
+    pub(crate) depth : usize,
     pub(crate) puttable : i32,
     pub(crate) corner : i32,
     pub(crate) aroundcorner : i32,
@@ -14,8 +15,9 @@ pub struct Setting {
 }
 
 impl Setting {
-    pub fn new(puttable : i32, corner : i32, aroundcorner : i32, wall : i32, all : i32, emptynum : usize) -> Setting {
+    pub fn new(depth : usize, puttable : i32, corner : i32, aroundcorner : i32, wall : i32, all : i32, emptynum : usize) -> Setting {
         Setting {
+            depth,
             puttable,
             corner,
             aroundcorner,
@@ -130,7 +132,7 @@ fn alpha_beta(board : &Board, player : &Color, turn : Color, ev : (i32, i32), de
     }
 }
 
-pub(crate) fn select(player : &Color, board : &Board, depth : usize, cs : &Setting) -> Option<(usize, usize)> {
+pub(crate) fn select(player : &Color, board : &Board, cs : &Setting) -> Option<(usize, usize)> {
     let cdns = board.putable_cdns(player);
 
     if cdns.len() == 0 {
@@ -141,7 +143,7 @@ pub(crate) fn select(player : &Color, board : &Board, depth : usize, cs : &Setti
         let fc = cdns[0].clone();
 
         let (cdn, _) = cdns.into_par_iter().map(|cdn| {
-            let v = alpha_beta(board.clone().put(cdn, player), player, *player, (-inf, inf), depth, cs);
+            let v = alpha_beta(board.clone().put(cdn, player), player, *player, (-inf, inf), cs.depth, cs);
             (cdn, v)
         }).reduce(|| (fc, -inf), |(cdn1, v1), (cdn2, v2)| {
             if v1 >= v2 {

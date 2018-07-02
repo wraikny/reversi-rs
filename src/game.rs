@@ -47,7 +47,7 @@ fn result_game(color : Option<Color>) {
 
 pub enum PlayerType {
     Human,
-    Computer(usize),
+    Computer(cpu::Setting),
 }
 
 pub struct Setting {
@@ -65,7 +65,7 @@ impl Setting {
     }
 }
 
-pub fn start(setting : &Setting, cs : &cpu::Setting, display : bool) {
+pub fn start(setting : &Setting, display : bool) {
 
     let size = setting.boardsize;
     if display {
@@ -108,7 +108,7 @@ pub fn start(setting : &Setting, cs : &cpu::Setting, display : bool) {
             'input: loop {
                 let coordinate = match setting.player_type(&player) {
                     PlayerType::Human => read_coordinate(size),
-                    PlayerType::Computer(depth) => Input::Coordinate(cpu::select(&player, &board, *depth, cs).unwrap()),
+                    PlayerType::Computer(cs) => Input::Coordinate(cpu::select(&player, &board, &cs).unwrap()),
                 };
 
                 match coordinate {
