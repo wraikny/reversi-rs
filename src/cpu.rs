@@ -55,10 +55,10 @@ fn eval(board : &Board, player : &Color) -> i32 {
     let (wp, wo) = (on_wall(pc), on_wall(oc));
 
     // Set good parameter
-    (p - o) * 5 + (cp - co) * 100 + (nco - ncp) * 10 + (wp - wo) * 2
+    (p - o) * 5 + (cp - co) * 100 + (nco - ncp) * 20 + (wp - wo) * 2
 }
 
-fn alpha_beta(board : &Board, player : &Color, turn : Color, ev : (i32, i32), depth : i8) -> i32 {
+fn alpha_beta(board : &Board, player : &Color, turn : Color, ev : (i32, i32), depth : usize) -> i32 {
     let new = |cdn, ev| {
         alpha_beta(board.clone().put(cdn, &turn), player, turn.rev(), ev, depth - 1)
     };
@@ -92,10 +92,8 @@ fn alpha_beta(board : &Board, player : &Color, turn : Color, ev : (i32, i32), de
     }
 }
 
-pub(crate) fn select(player : &Color, board : &Board) -> Option<(usize, usize)> {
+pub(crate) fn select(player : &Color, board : &Board, depth : usize) -> Option<(usize, usize)> {
     let cdns = board.putable_cdns(player);
-
-    let depth = 5;
 
     if cdns.len() == 0 {
         None

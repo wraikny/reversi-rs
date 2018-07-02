@@ -4,40 +4,6 @@ use color::Color;
 use board::Board;
 use cpu;
 
-fn get_board_size(filename : &str) -> Result<(usize, usize), String> {
-    use std::error::Error;
-    use std::fs::File;
-    use std::io::prelude::*;
-    use std::path::Path;
-
-    let path = Path::new(filename);
-
-    let mut file = match File::open(&path) {
-        Err(why) => {
-            return Err(format!("Couldn't open {}: {}", filename, Error::description(&why)));
-        },
-        Ok(file) => file,
-    };
-    
-
-    let mut s = String::new();
-    match file.read_to_string(&mut s) {
-        Err(why) => {
-            return Err(format!("Couldn't read {}: {}", filename, Error::description(&why)));
-        },
-        Ok(_) => (),
-    }
-
-    let mut s = s.split(",")
-        .map(|x| x.trim().parse::<usize>());
-
-    if let (Some(Ok(w)), Some(Ok(h))) = (s.next(), s.next()) {
-        Ok((w, h))
-    } else {
-        Err("The format of the file of the board size is not correct.\nExample: 8, 8".to_owned())
-    }
-}
-
 enum Input {
     Coordinate((usize, usize)),
     Quit,
@@ -81,31 +47,33 @@ fn result_game(color : Option<Color>) {
 
 pub enum PlayerType {
     Human,
-    Computer,
+    Computer(usize),
 }
 
 pub struct Setting {
     pub black : PlayerType,
     pub white : PlayerType,
+    pub boardsize : (usize, usize),
+}
+
+impl Setting {
+    fn player_type(&self, c : &Color) -> &PlayerType {
+        match *c {
+            Color::Black => &self.black,
+            Color::White => &self.white,
+        }
+    }
 }
 
 pub fn start(setting : Setting) -> Result<(), String> {
-    let size = get_board_size("config.csv")?;
+    let size = setting.boardsize;
 
     println!("Reversi!");
     println!("The Board size is {:?}.\n", size);
 
-    let is_cpu = |t : &PlayerType| match *t {
+    let is_cpu = |c : &Color| match setting.player_type(c) {
         PlayerType::Human => false,
-        PlayerType::Computer => true
-    };
-
-    let color_is_cpu = |color : &Color| {
-        use color::Color::*;
-        match *color {
-            Black => is_cpu(&setting.black),
-            White => is_cpu(&setting.white),
-        }
+        PlayerType::Computer(_) => true
     };
 
     let mut board = Board::new(size);
@@ -121,14 +89,13 @@ pub fn start(setting : Setting) -> Result<(), String> {
         }
 
         if board.putable(&player) {
-            if !color_is_cpu(&player) {
+            if !is_cpu(&player) {
                 println!("Input coordinate of {} as 'w h'. (q: quit)", &player);
             }
             'input: loop {
-                let coordinate = if !color_is_cpu(&player) {
-                    read_coordinate(size)
-                } else {
-                    Input::Coordinate(cpu::select(&player, &board).unwrap())
+                let coordinate = match setting.player_type(&player) {
+                    PlayerType::Human => read_coordinate(size),
+                    PlayerType::Computer(depth) => Input::Coordinate(cpu::select(&player, &board, *depth).unwrap()),
                 };
 
                 match coordinate {
