@@ -79,16 +79,15 @@ fn eval(board : &Board, player : &Color, cs : &Setting) -> i32 {
     let en = board.colors.par_iter().filter(|(_, color)| color.is_none()).count();
 
     // Set good parameter
+    (p - o) * cs.puttable + 
+    (cp - co) * cs.corner + 
+    (wp - wo) * cs.wall + 
     if en < cs.emptynum {
         let (pn, on) = (board.count_color(pc) as i32, board.count_color(oc) as i32);
-        (p - o) + (cp - co) + (wp - wo) + (pn - on) * cs.all
+        (pn - on) * cs.all
     } else {
         let (ncp, nco) = (next_corner(pc), next_corner(oc));
-
-        (p - o) * cs.puttable + 
-        (cp - co) * cs.corner + 
-        (nco - ncp) * cs.aroundcorner + 
-        (wp - wo) * cs.wall
+        (nco - ncp) * cs.aroundcorner
     }
 }
 
