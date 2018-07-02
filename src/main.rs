@@ -7,11 +7,11 @@ use reversi::cpu;
 fn main() {
     let setting = Setting {
         black : PlayerType::Human,
-        white : PlayerType::Computer(3),
+        white : PlayerType::Computer(4),
         boardsize : (8, 8),
     };
 
-    let cpu_setting = cpu::Setting::new(5, 50, 20, 1, 10, 100);
+    let cpu_setting = cpu::Setting::new(5, 50, 20, 1, 10, 50);
     
     start(&setting, &cpu_setting, true);
 }
