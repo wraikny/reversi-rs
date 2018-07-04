@@ -3,7 +3,7 @@ use reversi::game::*;
 use reversi::cpu;
 
 fn main() {
-    let cpu_setting = cpu::Setting::new(4, 5, 50, 20, 1, 7, 50);
+    let cpu_setting = cpu::Setting::new(5, 5, 50, 20, 1, 7, 50);
 
     let setting = Setting {
         black : PlayerType::Human,

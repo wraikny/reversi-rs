@@ -82,14 +82,9 @@ pub fn start(setting : &Setting, display : bool) {
 
     let mut player = Color::Black;
 
-    let mut count = 0;
-
     'main_loop: loop {
         if display {
             board.display();
-        } else {
-            print!("{}, ", count);
-            count = count + 1;
         }
 
         if board.finished(&player) {
@@ -103,12 +98,22 @@ pub fn start(setting : &Setting, display : bool) {
 
         if board.putable(&player) {
             if !is_cpu(&player) {
-                println!("Input coordinate of {} as 'w h'. (q: quit)", &player);
+                print!("You can put:\n");
+                println!("{}", 
+                    board.putable_cdns(&player)
+                        .iter().map(|cdn| format!("{:?}", cdn))
+                        .collect::<Vec<_>>().join(", ")
+                );
+                println!("\nInput coordinate of {} as 'w h'. (q: quit)", &player);
             }
             'input: loop {
                 let coordinate = match setting.player_type(&player) {
                     PlayerType::Human => read_coordinate(size),
-                    PlayerType::Computer(cs) => Input::Coordinate(cpu::select(&player, &board, &cs).unwrap()),
+                    PlayerType::Computer(cs) => {
+                        let cdn = cpu::select(&player, &board, &cs).unwrap();
+                        println!("{} put {:?}\n", &player, &cdn);
+                        Input::Coordinate(cdn)
+                    },
                 };
 
                 match coordinate {
@@ -123,7 +128,7 @@ pub fn start(setting : &Setting, display : bool) {
             }
         } else {
             if display {
-                println!("-*-Skiped the player {}-*-", &player);
+                println!("-*-Skiped the player {}-*-\n", &player);
             }
         }
 
