@@ -38,9 +38,9 @@ fn eval(board : &Board, player : &Color, cs : &Setting) -> i32 {
 
     let nextcorners = vec![
         (0, 1), (1, 0), (1, 1),
-        (1, h), (0, mh), (1, mh),
-        (w, 1), (mw, 0), (mw, 1),
-        (mw, h), (w, mh), (mw, mh),
+        (1, h), (0, h - 1), (1, h - 1),
+        (w, 1), (w - 1, 0), (w - 1, 1),
+        (w, h - 1), (w - 1, h), (w - 1, h - 1),
     ];
 
     let count_corner = |c| {
@@ -90,7 +90,8 @@ fn eval(board : &Board, player : &Color, cs : &Setting) -> i32 {
     (cp - co) * cs.corner + 
     (wp - wo) * cs.wall + 
     if en < cs.emptynum {
-        let (pn, on) = (board.count_color(pc) as i32, board.count_color(oc) as i32);
+        let bcc = |c| board.count_color(c);
+        let (pn, on) = (bcc(pc) as i32, bcc(oc) as i32);
         (pn - on) * cs.all
     } else {
         let (ncp, nco) = (next_corner(pc), next_corner(oc));
